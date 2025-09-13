@@ -1,6 +1,7 @@
 # app.py
 import streamlit as st
 import streamlit.components.v1 as components
+import json
 
 # --------------------------
 # MBTI별 공부 팁 데이터
@@ -26,7 +27,6 @@ study_tips = {
 
 # --------------------------
 # MBTI -> 애니메이션 매핑
-# (효과 이름은 아래 HTML/JS에서 처리됩니다)
 # --------------------------
 effect_map = {
     "INTJ": "confetti",
@@ -73,56 +73,86 @@ if st.button("추천받기 ✨"):
     effect = effect_map[mbti_choice]
     color = color_map.get(mbti_choice, "#2b2b2b")
 
-    # 레이아웃: 왼쪽 카드(설명) / 오른쪽 애니메이션
-    left, right = st.columns([1, 1])
-
-    with left:
-        # 카드 스타일
-        st.markdown(
-            f"""
-            <div style="
-                background: linear-gradient(135deg, {color} 0%, #ffffff 120%);
-                color: #fff;
-                padding: 18px;
-                border-radius: 12px;
-                box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-                min-height:140px;
-            ">
-                <h3 style="margin:0 0 6px 0;">🔮 {mbti_choice} — 추천 공부법</h3>
-                <p style="margin:0; line-height:1.5; color: rgba(255,255,255,0.95); white-space:pre-wrap;">{tip}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.markdown("**팁**: 오른쪽 애니메이션은 유형의 학습 성향을 시각적으로 각인시키기 위해 디자인되었습니다.")
-        st.markdown("---")
-
-    with right:
-        # HTML + CSS + JS 애니메이션 템플릿
-        # effect 변수 전달하여 JS에서 어떤 애니메이션을 실행할지 결정
-        html = f"""
-        <div id="mbti-root" data-effect="{effect}" style="width:100%; height:320px; position:relative; overflow:hidden; border-radius:12px;">
-          <div id="anim" style="position:absolute; inset:0; overflow:hidden;"></div>
+    # 카드 스타일
+    st.markdown(
+        f"""
+        <div style="
+            background: linear-gradient(135deg, {color} 0%, #ffffff 120%);
+            color: #fff;
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            min-height:140px;
+        ">
+            <h3 style="margin:0 0 6px 0;">🔮 {mbti_choice} — 추천 공부법</h3>
+            <p style="margin:0; line-height:1.5; color: rgba(255,255,255,0.95); white-space:pre-wrap;">{tip}</p>
         </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-        <!-- canvas-confetti CDN (used for confetti-like effects) -->
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+    # HTML + CSS + JS 애니메이션
+    html = f"""
+    <div id="mbti-root" data-effect="{effect}" style="width:100%; height:320px; position:relative; overflow:hidden; border-radius:12px;">
+      <div id="anim" style="position:absolute; inset:0; overflow:hidden;"></div>
+    </div>
 
-        <style>
-        /* common styles for floating items */
-        .float-item {{
-            position: absolute;
-            user-select: none;
-            pointer-events: none;
-            will-change: transform, opacity;
+    <!-- canvas-confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+    (function(){{
+        const root = document.getElementById('mbti-root');
+        const effect = root.dataset.effect;
+        const anim = document.getElementById('anim');
+
+        function rnd(min,max){{return Math.random()*(max-min)+min;}}
+
+        // Confetti
+        function doConfettiOnce() {{
+            if(window.confetti) {{
+                confetti({{particleCount:80, spread:70, origin:{{y:0.6}}}});
+            }}
         }}
-        /* balloons */
-        @keyframes rise {{
-            0% {{ transform: translateY(110%); opacity:0; }}
-            10% {{ opacity:1; }}
-            100% {{ transform: translateY(-40%); opacity:0.95; }}
+        // Fireworks
+        function doFireworks(times=6){{
+            if(!window.confetti) return;
+            let i=0;
+            const tid=setInterval(()=>{
+                confetti({{
+                    particleCount:40,
+                    spread:160,
+                    origin:{{y:0.6}}
+                }});
+                i++; if(i>=times) clearInterval(tid);
+            }},600);
         }}
-        .balloon {{
-            font-size: 28px;
-            animation: rise linear infi
+        // Balloons
+        function createBalloons(){{
+            for(let i=0;i<8;i++){{
+                const b=document.createElement('div');
+                b.textContent='🎈';
+                b.style.position='absolute';
+                b.style.left=rnd(5,85)+'%';
+                b.style.bottom='-10%';
+                b.style.fontSize=rnd(20,38)+'px';
+                b.style.animation=`rise ${rnd(6,12)}s linear ${rnd(0,3)}s infinite`;
+                anim.appendChild(b);
+            }}
+        }}
+        // Aurora
+        function aurora(){{
+            const g=document.createElement('div');
+            g.style.position='absolute';
+            g.style.inset='0';
+            g.style.background='linear-gradient(120deg, rgba(120,80,200,0.35), rgba(60,200,180,0.25), rgba(255,140,160,0.18))';
+            g.style.filter='blur(40px)';
+            g.style.animation='auroraMove 8s ease-in-out infinite';
+            anim.appendChild(g);
+            const style=document.createElement('style');
+            style.textContent='@keyframes auroraMove{0%{{transform:translateX(-20%)}}50%{{transform:translateX(20%)}}100%{{transform:translateX(-20%)}}}';
+            document.head.appendChild(style);
+        }}
+        // Typewriter
+        function typeWriter(text){{
+            const box=doc
