@@ -6,6 +6,29 @@ st.set_page_config(page_title="MBTI 국가별 분포", layout="wide")
 
 st.title("🌍 MBTI 유형별 비율이 가장 높은 국가 Top 10")
 
+# 국가명 변환 딕셔너리 (필요에 따라 계속 추가 가능)
+country_name_map = {
+    "United States": "미국",
+    "USA": "미국",
+    "Korea": "대한민국",
+    "South Korea": "대한민국",
+    "North Korea": "북한",
+    "Japan": "일본",
+    "China": "중국",
+    "Germany": "독일",
+    "France": "프랑스",
+    "United Kingdom": "영국",
+    "UK": "영국",
+    "Canada": "캐나다",
+    "Australia": "호주",
+    "Brazil": "브라질",
+    "India": "인도",
+    "Russia": "러시아",
+    "Italy": "이탈리아",
+    "Spain": "스페인",
+    # 필요한 국가를 여기 계속 추가하세요
+}
+
 # CSV 업로드
 uploaded_file = st.file_uploader("CSV 파일 업로드 (countriesMBTI_16types.csv)", type=["csv"])
 
@@ -16,6 +39,9 @@ if uploaded_file is not None:
     # 국가 컬럼 및 MBTI 컬럼 분리
     country_col = "Country"
     mbti_cols = [c for c in df.columns if c != country_col]
+
+    # 국가명을 한글로 변환
+    df[country_col] = df[country_col].replace(country_name_map)
 
     # 데이터 long 형태로 변환
     df_long = df.melt(
